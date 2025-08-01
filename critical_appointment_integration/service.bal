@@ -20,7 +20,7 @@ service on ibmmqListener {
     remote function onMessage(ibmmq:Message message) returns error? {
         // Handle incoming messages from the IBM MQ
         log:printInfo("Received message from IBM MQ: ", message = check string:fromBytes(message.payload));
-        
+
         // Extract and parse the payload from the IBM MQ message
         string payloadString = check string:fromBytes(message.payload);
         json payloadJson = check payloadString.fromJsonString();
