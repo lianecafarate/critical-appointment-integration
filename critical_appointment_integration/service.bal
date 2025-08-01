@@ -2,7 +2,6 @@ import ballerinax/ibm.ibmmq;
 import ballerina/log;
 import ballerina/sql;
 
-// ===== IBM MQ Integration =====
 listener ibmmq:Listener ibmmqListener = check new({
     name: queueManagerName,
     host: queueHost,
