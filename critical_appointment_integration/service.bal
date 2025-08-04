@@ -1,6 +1,5 @@
 import ballerinax/ibm.ibmmq;
 import ballerina/log;
-import ballerina/sql;
 
 listener ibmmq:Listener ibmmqListener = check new({
     name: queueManagerName,
@@ -13,30 +12,32 @@ listener ibmmq:Listener ibmmqListener = check new({
 
 @ibmmq:ServiceConfig {
     queueName,
+    sessionAckMode: "CLIENT_ACKNOWLEDGE",
     pollingInterval
 }
 
-service on ibmmqListener { 
-    remote function onMessage(ibmmq:Message message) returns error? {
-        // Handle incoming messages from the IBM MQ
-        log:printInfo("Received message from IBM MQ: ", message = check string:fromBytes(message.payload));
-
-        // Extract and parse the payload from the IBM MQ message
+service on ibmmqListener {
+    remote function onMessage(ibmmq:Message message, ibmmq:Caller caller) returns error? {
         string payloadString = check string:fromBytes(message.payload);
+        log:printInfo("Received message from IBM MQ", message = payloadString);
+
         json payloadJson = check payloadString.fromJsonString();
-
-        // Convert the JSON payload to Appointment record
         Appointment appointment = check payloadJson.cloneWithType(Appointment);
-        log:printInfo("Processing appointment: ", appointment = appointment);
+        log:printInfo("Processing appointment", appointment = appointment);
 
-        // Schedule the appointment
-        string|sql:Error? result = scheduleAppointment(appointment);
-        if result is string {
-            log:printInfo(result);
-        } else if result is sql:Error {
-            log:printError("Error scheduling appointment: " + result.message());
+        // Schedule appointment and handle errors
+        error? scheduleResult = scheduleAppointment(appointment);
+        if scheduleResult is error {
+            log:printError("Error scheduling appointment: " + scheduleResult.message());
+            return scheduleResult; // Exit before acknowledgment
         } else {
-            log:printInfo("Appointment scheduled successfully: " + appointment.appointmentId);
+            // Use trap to catch error without failing
+            error? ackErr = caller->acknowledge(message);
+            if ackErr is error {
+                log:printError("Failed to acknowledge message: " + ackErr.message());
+            } else {
+                log:printInfo("Message acknowledged successfully.");
+            }
         }
     }
 }
