@@ -1,6 +1,7 @@
 import ballerinax/ibm.ibmmq;
 import ballerina/log;
 
+//IBM MQ Listener creation
 listener ibmmq:Listener ibmmqListener = check new({
     name: queueManagerName,
     host: queueHost,
@@ -16,6 +17,7 @@ listener ibmmq:Listener ibmmqListener = check new({
     pollingInterval
 }
 
+//Service to handle incoming messages from IBM MQ
 service on ibmmqListener {
     remote function onMessage(ibmmq:Message message, ibmmq:Caller caller) returns error? {
         string payloadString = check string:fromBytes(message.payload);
