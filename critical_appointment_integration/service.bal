@@ -12,7 +12,7 @@ listener ibmmq:Listener ibmmqListener = check new({
 
 @ibmmq:ServiceConfig {
     queueName,
-    sessionAckMode: "CLIENT_ACKNOWLEDGE",
+    sessionAckMode: ibmmq:SESSION_TRANSACTED,
     pollingInterval
 }
 
@@ -25,19 +25,14 @@ service on ibmmqListener {
         Appointment appointment = check payloadJson.cloneWithType(Appointment);
         log:printInfo("Processing appointment", appointment = appointment);
 
-        // Schedule appointment and handle errors
+        // Try to schedule the appointment
         error? scheduleResult = scheduleAppointment(appointment);
         if scheduleResult is error {
             log:printError("Error scheduling appointment: " + scheduleResult.message());
-            return scheduleResult; // Exit before acknowledgment
+            check caller->'rollback(); // rollback the message so it can be redelivered
         } else {
-            // Use trap to catch error without failing
-            error? ackErr = caller->acknowledge(message);
-            if ackErr is error {
-                log:printError("Failed to acknowledge message: " + ackErr.message());
-            } else {
-                log:printInfo("Message acknowledged successfully.");
-            }
+            log:printInfo("Appointment scheduled successfully");
+            check caller->'commit(); // acknowledge the message and commit the transaction
         }
     }
 }
