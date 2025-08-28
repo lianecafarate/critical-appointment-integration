@@ -7,12 +7,6 @@ This project demonstrates a **message-processing integration** using **Ballerina
 - **Processing Logic:** Ballerina Service
 - **Destination:** Relational Database (MySQL)
 
-## 🚀 Features
-- **Database Integration:** Persists appointment records in a relational database (e.g., MySQL).
-- **Comprehensive Logging:** Logs message receipt, processing steps, DB status, and error traces.
-- **Configuration Management:** Supports flexible connection settings via `Config.bal`.
-- **Need to add more!**
-
 ## 🏗 Architecture
 
 The system consists of the following components:
